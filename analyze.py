@@ -5,6 +5,7 @@ import ssl
 import re
 import os
 import platform
+import gomoku_png
 
 # Create directories for the results, if they don't exist already.
 if not os.path.exists('sav'):
@@ -88,6 +89,7 @@ def analyze(table):
         print(result)
         results.insert(0, result)
 
+    analysis = []
     with open("results/" + table + ".txt", "w") as f:
         for i in range(len(results)):
             suggested_evaluation, suggested_move, move = results[i]
@@ -95,7 +97,25 @@ def analyze(table):
                 actual_evaluation = results[i + 1][0]
             else:
                 actual_evaluation = results[i][0]
-            f.write('%s,%s,%s,%s\n' % (move, actual_evaluation, suggested_move, suggested_evaluation))
+            analysis_line = (move, actual_evaluation, suggested_move, suggested_evaluation)
+            analysis.append(analysis_line)
+            f.write('%s,%s,%s,%s\n' % analysis_line)
+    write_analysis(analysis)
+
+def write_analysis(analysis):
+    folder = 'analysis/' + str(table)
+    os.makedirs(folder)
+    stones = []
+    move = 1
+    for played, actual_evaluation, suggested_move, suggested_evaluation in analysis:
+        loss = suggested_evaluation - actual_evaluation
+        if move % 2 == 0:
+            loss = -loss
+        # If the loss is significant, output a png file showing the position.
+        if loss > 100:
+            gomoku_png.go(15, (played + '*r') + ' ' + (suggested_move + '*g') + ' ' + ' '.join(stones), folder + '/' + str(move) + '.png', None)
+        move += 1
+        stones.append(played)
 
 if len(sys.argv) > 1:
     #table = sys.argv[1]
